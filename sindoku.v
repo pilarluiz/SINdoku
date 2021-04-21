@@ -120,10 +120,8 @@ module sindoku(Clk, R, L, U, D, C, Reset, CheckSolu, userIn, q_I, q_Solve, q_Che
 							end
 						end
 					CORRECT:
-						if (Ack)	state <= I;
 
 					INCORRECT:
-						if (Ack)	state <= I;
 						
 					default:		
 						state <= UNK;
