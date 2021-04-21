@@ -14,11 +14,11 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module ee354_GCD(Clk, CEN, Reset, Start, Ack, Ain, Bin, A, B, AB_GCD, i_count, q_I, q_Sub, q_Mult, q_Done);
-
+module ee354_GCD(Clk, R, L, U, D, C, Reset, CheckSolu, userIn, q_I, q_Solve, q_Check, q_Correct, q_Incorrect);
 
 	/*  INPUTS */
-	input	Clk, CEN, Reset, Start, Ack;
+	input	Clk, R, L, U, D, C
+	input Reset, CheckSolu;
 	input userIn;
 	
 	// i_count is a count of number of factors of 2	. We do not need an 8-bit counter. 
@@ -29,12 +29,12 @@ module ee354_GCD(Clk, CEN, Reset, Start, Ack, Ain, Bin, A, B, AB_GCD, i_count, q
 	reg [4:0] solu [0:8][0:8];
 	// store current state
 	integer row, col;
-	output q_I, q_Solve, q_Check, q_Done;
+	output q_I, q_Solve, q_Check, q_Correct, q_Incorrect;
 	reg [3:0] state;	
-	assign {q_Done, q_Check, q_Solve, q_I} = state;
+	assign {q_Incorrect, q_Correct, q_Check, q_Solve, q_I} = state;
 		
 	localparam 	
-	I = 4'b0001, SOLVE = 4'b0010, CHECK = 4'b0100, DONE = 4'b1000, UNK = 4'bXXXX;
+	I = 5'b00001, SOLVE = 5'b00010, CHECK = 5'b00100, CORRECT = 5'b01000, INCORRECT = 5'b10000, UNK = 5'bXXXXX;
 
 	assign{solu[0][0], solu[0][1], solu[0][2], solu[0][3], solu[0][4], solu[0][5], solu[0][6], solu[0][7], solu[0][8]}  ={2,5,9,3,1,4,7,6,8} ;
 	assign{solu[1][0], solu[1][1], solu[1][2], solu[1][3], solu[1][4], solu[1][5], solu[1][6], solu[1][7], solu[1][8]}  ={8,7,1,6,2,9,4,5,3} ;
@@ -53,15 +53,15 @@ module ee354_GCD(Clk, CEN, Reset, Start, Ack, Ain, Bin, A, B, AB_GCD, i_count, q
 		if(Reset) 
 		  begin
 			state <= I;
-			row <= 8'bx;  	// ****** TODO ******
-			col <= 8'bx;		  	// complete the 3 lines			
+			row <= 4'bXXXX;  	// ****** TODO ******
+			col <= 4'bXXXX;		  	// complete the 3 lines			
 		  end
 		else				// ****** TODO ****** complete several parts
 				case(state)	
 					I:
 					begin
 						// state transfers
-						if (Start) state <= SOLVE;
+						state <= SOLVE;
 						// data transfers
 						row <= 0;
 						col <=0;
@@ -77,53 +77,38 @@ module ee354_GCD(Clk, CEN, Reset, Start, Ack, Ain, Bin, A, B, AB_GCD, i_count, q
 
 
 					end		
-					SUB: 
-		               if (CEN) //  This causes single-stepping the SUB state
-						begin		
-							// state transfers
-							if (A == B) 
-								state <= (i_count == 0) ? DONE : MULT;
-							// data transfers
-							if (A == B) 
-								AB_GCD <= A  ;		
-							else if (A < B)
-							  begin
-								A <= B;// swap A and B
- 								B <= A;
- 
-							  end
-							else						// if (A > B)
-							  begin	
-							  	if(A[0] && B[0]) 
-							  		A <= A-B;
-							  	else if(!A[0] &&! B[0])
-							  	begin
-							  		i_count<= i_count+1;
-							  		A <= A/2;
-							  		B <= B/2;
-							  	end
-							  	else 
-							  	begin
-							  		if(!A[0])
-							  			A <= A/2;
-							  		if(!B[0])
-							  			B <= B/2;	
-							  	end
-
-
-							  end
-						end
-					MULT:
-					  if (CEN) // This causes single-stepping the MULT state
+					SOLVE: 
+						if(CheckSolu)
+			               	state<= CHECK;
+		               	if (R) //  This causes single-stepping the SUB state
+		               		if(col != 8)
+								col <= col +1;
+						if (L) //  This causes single-stepping the SUB state
+		               		if(col != 0)
+								col <= col -1;
+						if (U) //  This causes single-stepping the SUB state
+		               		if(row != 0)
+								row <= row -1;
+						if (D) //  This causes single-stepping the SUB state
+		               		if(row != 8)
+								row <= row +1;
+						if (C) //  This causes single-stepping the SUB state
+		               		puzzle[row][col] <= userIn;
+					CHECK:
+						for (integer i = 0; i < 9; i = i + 1) 
 						begin
-							if(i_count==1) state <= DONE;// state transfers
-							
-							AB_GCD <= AB_GCD*2  ;	// data transfers
-							i_count <= i_count -1;
-
+							for (integer j = 0; j < 9; j = j + 1) 
+							begin
+								if(puzzle[i][j] != solu[i][j])
+									state<= INCORRECT;
+							end
 						end
+						state<= CORRECT;
 					
-					DONE:
+					CORRECT:
+						if (Ack)	state <= I;
+
+					INCORRECT:
 						if (Ack)	state <= I;
 						
 					default:		

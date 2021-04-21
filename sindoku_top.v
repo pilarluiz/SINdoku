@@ -23,8 +23,11 @@ module ee354_GCD_top
         ClkPort,                           // the 100 MHz incoming clock signal
 		
 		BtnL, BtnU, BtnD, BtnR,            // the Left, Up, Down, and the Right buttons BtnL, BtnR,
-		BtnC,                              // the center button (this is our reset in most of our designs)
-		Sw3, Sw2, Sw1, Sw0, // 8 switches
+		BtnC,                              // the center button take the number
+		
+		Sw15,Sw14, //reset&check switch
+		Sw3, Sw2, Sw1, Sw0, // 4 switches for number 
+		Ld7, Ld6, Ld5, Ld4, Ld3,
 		An3, An2, An1, An0,			       // 4 anodes
 		An7, An6, An5, An4,                // another 4 anodes which are not used
 		Ca, Cb, Cc, Cd, Ce, Cf, Cg,        // 7 cathodes
@@ -36,7 +39,7 @@ module ee354_GCD_top
 	input		ClkPort;	
 	// Project Specific Inputs
 	input		BtnL, BtnU, BtnD, BtnR, BtnC;	
-	input		Sw3, Sw2, Sw1, Sw0;
+	input		Sw15, Sw14, Sw3, Sw2, Sw1, Sw0;
 	
 	
 	/*  OUTPUTS */
@@ -44,7 +47,7 @@ module ee354_GCD_top
 	output 	MemOE, MemWR, RamCS, QuadSpiFlashCS;
 	// Project Specific Outputs
 	// LEDs
-	
+	output Ld7, Ld6, Ld5, Ld4;
 	// SSD Outputs
 	output 	Cg, Cf, Ce, Cd, Cc, Cb, Ca, Dp;
 	output 	An0, An1, An2, An3;	
@@ -58,8 +61,8 @@ module ee354_GCD_top
 	reg [26:0]	DIV_CLK;
 	
 	wire Start_Ack_Pulse;
-	wire in_AB_Pulse, CEN_Pulse, BtnR_Pulse, BtnU_Pulse;
-	wire q_I, q_Solve, q_Check, q_Done;
+	wire BtnR_Pulse, BtnL_Pulse, BtnU_Pulse, BtnD_Pulse, BtnC_Pulse;
+	wire [3:0] userIn;
 	
 	reg [3:0]	SSD;
 	wire [3:0]	SSD3, SSD2, SSD1, SSD0;
@@ -86,7 +89,8 @@ module ee354_GCD_top
 // The BUFGPs buffer these input ports and connect them to the global 
 // routing resources in the FPGA.
 
-	assign Reset = BtnC;
+	assign Reset = Sw15;
+	assign CheckSolu = Sw14;
 	
 //------------
 	// Our clock is too fast (100MHz) for SSD scanning
@@ -111,20 +115,21 @@ module ee354_GCD_top
 
 ee354_debouncer #(.N_dc(28)) ee354_debouncer_2 
         (.CLK(sys_clk), .RESET(Reset), .PB(BtnL), .DPB( ), 
-		.SCEN(Start_Ack_Pulse), .MCEN( ), .CCEN( ));
-		 		 
-		 // BtnR is used to generate in_AB_Pulse to record the values of 
-		 // the inputs A and B as set on the switches.
-		 // BtnU is used as CEN_Pulse to allow single-stepping
-	assign {in_AB_Pulse, CEN_Pulse} = {BtnR_Pulse, BtnU_Pulse};
+		.SCEN(BtnL_Pulse), .MCEN( ), .CCEN( ));
 
 ee354_debouncer #(.N_dc(28)) ee354_debouncer_1 
         (.CLK(sys_clk), .RESET(Reset), .PB(BtnR), .DPB( ), 
 		.SCEN(BtnR_Pulse), .MCEN( ), .CCEN( ));
+ee354_debouncer #(.N_dc(28)) ee354_debouncer_1 
+        (.CLK(sys_clk), .RESET(Reset), .PB(BtnU), .DPB( ), 
+		.SCEN(BtnU_Pulse), .MCEN( ), .CCEN( ));
+ee354_debouncer #(.N_dc(28)) ee354_debouncer_1 
+        (.CLK(sys_clk), .RESET(Reset), .PB(BtnD), .DPB( ), 
+		.SCEN(BtnD_Pulse), .MCEN( ), .CCEN( ));
 
 ee354_debouncer #(.N_dc(28)) ee354_debouncer_0 // ****** TODO  in Part 2 ******
-        (.CLK(sys_clk), .RESET(Reset), .PB(BtnU), .DPB( ), // complete this instantiation
-		.SCEN(BtnU_Pulse), .MCEN( ), .CCEN( )); // to produce BtnU_Pulse from BtnU
+        (.CLK(sys_clk), .RESET(Reset), .PB(BtnC), .DPB( ), // complete this instantiation
+		.SCEN(BtnC_Pulse), .MCEN( ), .CCEN( )); // to produce BtnU_Pulse from BtnU
 		
 //------------
 // DESIGN
@@ -134,42 +139,23 @@ ee354_debouncer #(.N_dc(28)) ee354_debouncer_0 // ****** TODO  in Part 2 ******
 	begin
 		if(Reset)
 		begin
-			row <= 0;
-			col <= 0;
-			A_bar_slash_B <= 0;
+			userIn<= 4'bXXXX;
 		end
 		else
 		begin
-			if (in_AB_Pulse)  	// Note: in_AB_Pulse is same as BtnR_Pulse.
-								// ****** TODO  in Part 2 ******
-								// Complete the lines below so that you deposit the value on switches
-								// either in Ain or in Bin based on the value of the flag A_bar_slash_B. 
-								// Also you need to toggle the value of the flag A_bar_slash_B.
-				begin
-					A_bar_slash_B <= ~ A_bar_slash_B;
-					if (A_bar_slash_B == 1'b0)
-						Ain <= {Sw7, Sw6, Sw5, Sw4, Sw3, Sw2, Sw1, Sw0};
-					else
-						Bin <= {Sw7, Sw6, Sw5, Sw4, Sw3, Sw2, Sw1, Sw0};
-				end
+			userIn <= {Sw3, Sw2, Sw1, Sw0};
 		end
 	end
 	
 	// the state machine module
-	ee354_GCD ee354_GCD_1(.Clk(sys_clk), .CEN(CEN_Pulse), .Reset(Reset), .Start(Start_Ack_Pulse), .Ack(Start_Ack_Pulse), 
-						  .Ain(Ain), .Bin(Bin), .A(A), .B(B), .AB_GCD(AB_GCD), .i_count(i_count),
-						  .q_I(q_I), .q_Sub(q_Sub), .q_Mult(q_Mult), .q_Done(q_Done));
+	ee354_GCD ee354_GCD_1(.Clk(sys_clk), .R(BtnR_Pulse), .L(BtnL_Pulse), .U(BtnU_Pulse), .D(BtnD_Pulse), .C(BtnC_Pulse), .Reset(Reset),
+						  .CheckSolu(CheckSolu), .userIn(userIn), .q_I(q_I), .q_Solve(q_Solve), .q_Check(q_Check), .q_Correct(q_Correct), .q_Incorrect(q_Incorrect));
 
 //------------
 // OUTPUT: LEDS
 	
-	assign {Ld7, Ld6, Ld5, Ld4} = {q_I, q_Sub, q_Mult, q_Done};
-	assign {Ld3, Ld2, Ld1, Ld0} = {BtnL, BtnU, BtnR, BtnD}; // Reset is driven by BtnC
-	// Here
-	// BtnL = Start/Ack
-	// BtnU = Single-Step
-	// BtnR = in_A_in_B
-	// BtnD = not used here
+	assign {Ld7, Ld6, Ld5, Ld4, Ld3} = {q_I, q_Solve, q_Check, q_Correct, q_Incorrect};
+	
 	
 //------------
 // SSD (Seven Segment Display)
