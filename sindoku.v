@@ -14,7 +14,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module ee354_GCD(Clk, R, L, U, D, C, Reset, CheckSolu, userIn, q_I, q_Solve, q_Check, q_Correct, q_Incorrect);
+module sindoku(Clk, R, L, U, D, C, Reset, CheckSolu, userIn, q_I, q_Solve, q_Check, q_Correct, q_Incorrect);
 
 	/*  INPUTS */
 	input	Clk, R, L, U, D, C

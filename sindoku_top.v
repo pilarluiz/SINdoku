@@ -148,7 +148,7 @@ ee354_debouncer #(.N_dc(28)) ee354_debouncer_0 // ****** TODO  in Part 2 ******
 	end
 	
 	// the state machine module
-	ee354_GCD ee354_GCD_1(.Clk(sys_clk), .R(BtnR_Pulse), .L(BtnL_Pulse), .U(BtnU_Pulse), .D(BtnD_Pulse), .C(BtnC_Pulse), .Reset(Reset),
+	sindoku sindoku_1(.Clk(sys_clk), .R(BtnR_Pulse), .L(BtnL_Pulse), .U(BtnU_Pulse), .D(BtnD_Pulse), .C(BtnC_Pulse), .Reset(Reset),
 						  .CheckSolu(CheckSolu), .userIn(userIn), .q_I(q_I), .q_Solve(q_Solve), .q_Check(q_Check), .q_Correct(q_Correct), .q_Incorrect(q_Incorrect));
 
 //------------
