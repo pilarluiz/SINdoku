@@ -29,6 +29,7 @@ module ee354_GCD(Clk, R, L, U, D, C, Reset, CheckSolu, userIn, q_I, q_Solve, q_C
 	reg [4:0] solu [0:8][0:8];
 	// store current state
 	integer row, col;
+	integer i, j;
 	output q_I, q_Solve, q_Check, q_Correct, q_Incorrect;
 	reg [3:0] state;	
 	assign {q_Incorrect, q_Correct, q_Check, q_Solve, q_I} = state;
@@ -54,7 +55,9 @@ module ee354_GCD(Clk, R, L, U, D, C, Reset, CheckSolu, userIn, q_I, q_Solve, q_C
 		  begin
 			state <= I;
 			row <= 4'bXXXX;  	// ****** TODO ******
-			col <= 4'bXXXX;		  	// complete the 3 lines			
+			col <= 4'bXXXX;		  	// complete the 3 lines
+			i<= 4'bXXXX;
+			j<= 4'bXXXX;			
 		  end
 		else				// ****** TODO ****** complete several parts
 				case(state)	
@@ -65,6 +68,8 @@ module ee354_GCD(Clk, R, L, U, D, C, Reset, CheckSolu, userIn, q_I, q_Solve, q_C
 						// data transfers
 						row <= 0;
 						col <=0;
+						i<=0;
+						j<=0;
 						assign{puzzle[0][0], puzzle[0][1], puzzle[0][2], puzzle[0][3], puzzle[0][4], puzzle[0][5], puzzle[0][6], puzzle[0][7], puzzle[0][8]}  <={0,5,0,3,1,4,0,6,0} ;
 						assign{puzzle[1][0], puzzle[1][1], puzzle[1][2], puzzle[1][3], puzzle[1][4], puzzle[1][5], puzzle[1][6], puzzle[1][7], puzzle[1][8]}  <={8,7,0,0,0,9,4,0,3} ;
 						assign{puzzle[2][0], puzzle[2][1], puzzle[2][2], puzzle[2][3], puzzle[2][4], puzzle[2][5], puzzle[2][6], puzzle[2][7], puzzle[2][8]}  <={6,4,3,5,0,7,1,9,2} ;
@@ -95,16 +100,25 @@ module ee354_GCD(Clk, R, L, U, D, C, Reset, CheckSolu, userIn, q_I, q_Solve, q_C
 						if (C) //  This causes single-stepping the SUB state
 		               		puzzle[row][col] <= userIn;
 					CHECK:
-						for (integer i = 0; i < 9; i = i + 1) 
+						if( i==8 && j==8 && puzzle[i][j]==solu[i][j])
+							state<= CORRECT;
+						else
 						begin
-							for (integer j = 0; j < 9; j = j + 1) 
+							if(puzzle[i][j]!=solu[i][j])
+								state<=INCORRECT;
+							else
 							begin
-								if(puzzle[i][j] != solu[i][j])
-									state<= INCORRECT;
+								if(j==8)
+								begin
+									j<=0;
+									i<=i+1;		
+								end	
+								else 
+								begin
+									j<= j+1;
+								end
 							end
 						end
-						state<= CORRECT;
-					
 					CORRECT:
 						if (Ack)	state <= I;
 

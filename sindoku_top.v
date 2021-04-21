@@ -164,37 +164,23 @@ ee354_debouncer #(.N_dc(28)) ee354_debouncer_0 // ****** TODO  in Part 2 ******
 	// ****** TODO  in Part 2 ******
 	// assign y = s ? i1 : i0;  // an example of a 2-to-1 mux coding
 	// assign y = s1 ? (s0 ? i3: i2): (s0 ? i1: i0); // an example of a 4-to-1 mux coding
-	assign SSD3 = (q_Mult | q_Done) ? AB_GCD[7:4]  : q_I ? Ain[7:4] : A[7:4];
-	assign SSD2 = (q_Mult | q_Done) ? AB_GCD[3:0]  : q_I ? Ain[3:0] : A[3:0];
-	assign SSD1 = (q_Mult | q_Done) ? i_count[7:4] : q_I ? Bin[7:4] : B[7:4];
-	assign SSD0 = (q_Mult | q_Done) ? i_count[3:0] : q_I ? Bin[3:0] : B[3:0];
+	
+	assign SSD0 = userIn;
 
 
 	// need a scan clk for the seven segment display 
-	// 191Hz (100 MHz / 2^19) works well
-	assign ssdscan_clk = DIV_CLK[19:18];
+	// 191Hz (100 MHz / 2^19) works well	
 	
-	assign An3	= !(~(ssdscan_clk[1]) && ~(ssdscan_clk[0]));  // when ssdscan_clk = 00
-	assign An2	= !(~(ssdscan_clk[1]) &&  (ssdscan_clk[0]));  // when ssdscan_clk = 01
-	assign An1	=  !((ssdscan_clk[1]) && ~(ssdscan_clk[0]));  // when ssdscan_clk = 10
-	assign An0	=  !((ssdscan_clk[1]) &&  (ssdscan_clk[0]));  // when ssdscan_clk = 11
+	assign An0	=  1'b0;  // when ssdscan_clk = 11
 	// close another four anodes
 	assign An7 = 1'b1;
 	assign An6 = 1'b1;
 	assign An5 = 1'b1;
 	assign An4 = 1'b1;
-	
-	
-	always @ (ssdscan_clk, SSD0, SSD1, SSD2, SSD3)
-	begin : SSD_SCAN_OUT
-		case (ssdscan_clk) 
-				  2'b00: SSD = SSD3;
-				  2'b01: SSD = SSD2;
-				  
-				  2'b10: SSD = SSD1;
-				  2'b11: SSD = SSD0;
-		endcase 
-	end
+	assign An3 = 1'b1;
+	assign An2 = 1'b1;
+	assign An1 = 1'b1;
+
 	
 	// and finally convert SSD_num to ssd
 	// We convert the output of our 4-bit 4x1 mux
@@ -202,9 +188,9 @@ ee354_debouncer #(.N_dc(28)) ee354_debouncer_0 // ****** TODO  in Part 2 ******
 	assign {Ca, Cb, Cc, Cd, Ce, Cf, Cg, Dp} = {SSD_CATHODES};
 
 	// Following is Hex-to-SSD conversion
-	always @ (SSD) 
+	always @ (SSD0) 
 	begin : HEX_TO_SSD
-		case (SSD) // in this solution file the dot points are made to glow by making Dp = 0
+		case (SSD0) // in this solution file the dot points are made to glow by making Dp = 0
 		    //                                                                abcdefg,Dp
 			4'b0000: SSD_CATHODES = 8'b00000011; // 0
 			4'b0001: SSD_CATHODES = 8'b10011111; // 1
