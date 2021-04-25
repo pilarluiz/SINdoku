@@ -25,7 +25,7 @@ module ee354_GCD_top
 		BtnL, BtnU, BtnD, BtnR,            // the Left, Up, Down, and the Right buttons BtnL, BtnR,
 		BtnC,                              // the center button take the number
 		
-		Sw15,Sw14, //reset&check switch
+		Sw15, Sw14, Sw13 //reset&ack&check switch
 		Sw3, Sw2, Sw1, Sw0, // 4 switches for number 
 		Ld7, Ld6, Ld5, Ld4, Ld3,
 		An3, An2, An1, An0,			       // 4 anodes
@@ -39,7 +39,7 @@ module ee354_GCD_top
 	input		ClkPort;	
 	// Project Specific Inputs
 	input		BtnL, BtnU, BtnD, BtnR, BtnC;	
-	input		Sw15, Sw14, Sw3, Sw2, Sw1, Sw0;
+	input		Sw15, Sw14, Sw13, Sw3, Sw2, Sw1, Sw0;
 	
 	
 	/*  OUTPUTS */
@@ -90,7 +90,8 @@ module ee354_GCD_top
 // routing resources in the FPGA.
 
 	assign Reset = Sw15;
-	assign CheckSolu = Sw14;
+	assign CheckSolu = Sw13;
+	assign Ack = Sw14;
 	
 //------------
 	// Our clock is too fast (100MHz) for SSD scanning
@@ -148,8 +149,9 @@ ee354_debouncer #(.N_dc(28)) ee354_debouncer_0 // ****** TODO  in Part 2 ******
 	end
 	
 	// the state machine module
-	sindoku sindoku_1(.Clk(sys_clk), .R(BtnR_Pulse), .L(BtnL_Pulse), .U(BtnU_Pulse), .D(BtnD_Pulse), .C(BtnC_Pulse), .Reset(Reset),
-						  .CheckSolu(CheckSolu), .userIn(userIn), .q_I(q_I), .q_Solve(q_Solve), .q_Check(q_Check), .q_Correct(q_Correct), .q_Incorrect(q_Incorrect));
+	sindoku sindoku_1(.Clk(sys_clk), .R(BtnR_Pulse), .L(BtnL_Pulse), .U(BtnU_Pulse), .D(BtnD_Pulse), .C(BtnC_Pulse), .Reset(Reset), .Ack(Ack)
+						  .CheckSolu(CheckSolu), .userIn(userIn), .q_I(q_I), .q_Solve(q_Solve), .q_Check(q_Check), .q_Correct(q_Correct), .q_Incorrect(q_Incorrect),
+						  .i(i), .j(j), .row(row), .col(col), .puzzle_ij(puzzle_ij), .solu_ij(solu_ij));
 
 //------------
 // OUTPUT: LEDS

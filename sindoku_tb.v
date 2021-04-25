@@ -28,6 +28,9 @@ module sindoku_tb_v;
 	wire q_Check;
 	wire q_Correct;
 	wire q_Incorrect;
+	wire [3:0] row, col;
+	wire [4:0] i, j;
+	wire [4:0] puzzle_ij, solu_ij;
 	reg [9*8:0] state_string; // 6-character string for symbolic display of state
 	integer clk_cnt, start_clock_cnt,clocks_taken;
 	// Instantiate the Unit Under Test (UUT)
@@ -38,13 +41,20 @@ module sindoku_tb_v;
 		.D(BtnD_Pulse), 
 		.C(BtnC_Pulse), 
 		.Reset(Reset),
+		.Ack(Ack),
 		.CheckSolu(CheckSolu), 
 		.userIn(userIn), 
 		.q_I(q_I), 
 		.q_Solve(q_Solve), 
 		.q_Check(q_Check), 
 		.q_Correct(q_Correct), 
-		.q_Incorrect(q_Incorrect));
+		.q_Incorrect(q_Incorrect),
+		.i(i), 
+		.j(j),
+		.row(row),
+		.col(col),
+		.puzzle_ij(puzzle_ij),
+		.solu_ij(solu_ij));
 		
 		
 		always  begin #5; Clk = ~ Clk; end
@@ -333,6 +343,7 @@ module sindoku_tb_v;
 		#1;
 		BtnL_Pulse=0;
 
+		
 		@(posedge Clk);
 		#1;
 		BtnL_Pulse=1;
@@ -351,12 +362,8 @@ module sindoku_tb_v;
 		@(posedge Clk);
 		#1;
 		BtnL_Pulse=0;
-		@(posedge Clk);
-		#1;
-		BtnL_Pulse=1;
-		@(posedge Clk);
-		#1;
-		BtnL_Pulse=0;
+
+		
 
 		userIn=3;
 		@(posedge Clk);
@@ -874,18 +881,26 @@ module sindoku_tb_v;
 		else begin
 			$display("INCORRECT");
 		end
-		$display("It took %d clock(s) to compute the GCD", clocks_taken);
+		$display("It took %d clock(s) to play the game", clocks_taken);
 		//keep Ack signal high for one clock
+
+		@(posedge Clk);
+		#1;
+		Ack=1;
+		@(posedge Clk);
+		#1;
+		Ack=0;
 
 	end
 	
 	always @(*)
 		begin
-			case ({q_I, q_Sub, q_Mult, q_Done})    // Note the concatenation operator {}
-				4'b1000: state_string = "q_I        ";  // ****** TODO ******
-				4'b0100: state_string = "q_Solve    ";  // Fill-in the three lines
-				4'b0010: state_string = "q_Correct  ";
-				4'b0001: state_string = "q_Incorrect";
+			case ({q_I, q_Solve, q_Check, q_Correct, q_Incorrect})    // Note the concatenation operator {}
+				5'b10000: state_string = "q_I        ";  // ****** TODO ******
+				5'b01000: state_string = "q_Solve    ";  // Fill-in the three lines
+				5'b00100: state_string = "q_Check    ";  // Fill-in the three lines
+				5'b00010: state_string = "q_Correct  ";
+				5'b00001: state_string = "q_Incorrect";
 							
 			endcase
 		end
