@@ -25,13 +25,17 @@ module ee354_GCD_top
 		BtnL, BtnU, BtnD, BtnR,            // the Left, Up, Down, and the Right buttons BtnL, BtnR,
 		BtnC,                              // the center button take the number
 		
-		Sw15, Sw14, Sw13 //reset&ack&check switch
+		Sw15, Sw14, Sw13, //reset&ack&check switch
 		Sw3, Sw2, Sw1, Sw0, // 4 switches for number 
 		Ld7, Ld6, Ld5, Ld4, Ld3,
 		An3, An2, An1, An0,			       // 4 anodes
 		An7, An6, An5, An4,                // another 4 anodes which are not used
 		Ca, Cb, Cc, Cd, Ce, Cf, Cg,        // 7 cathodes
-		Dp                                 // Dot Point Cathode on SSDs
+		Dp,                                 // Dot Point Cathode on SSDs
+
+		//VGA signal
+		hSync, vSync,
+		vgaR, vgaG, vgaB
 	  );
 
 	/*  INPUTS */
@@ -47,11 +51,14 @@ module ee354_GCD_top
 	output 	MemOE, MemWR, RamCS, QuadSpiFlashCS;
 	// Project Specific Outputs
 	// LEDs
-	output Ld7, Ld6, Ld5, Ld4;
+	output Ld7, Ld6, Ld5, Ld4, Ld3;
 	// SSD Outputs
 	output 	Cg, Cf, Ce, Cd, Cc, Cb, Ca, Dp;
 	output 	An0, An1, An2, An3;	
 	output 	An4, An5, An6, An7;	
+	
+	output hSync, vSync;
+	output [3:0] vgaR, vgaG, vgaB;
 
 	
 	/*  LOCAL SIGNALS */
@@ -62,11 +69,20 @@ module ee354_GCD_top
 	
 	wire Start_Ack_Pulse;
 	wire BtnR_Pulse, BtnL_Pulse, BtnU_Pulse, BtnD_Pulse, BtnC_Pulse;
-	wire [3:0] userIn;
+	// Changed userIn to a reg
+	reg [3:0] userIn;
 	
 	reg [3:0]	SSD;
 	wire [3:0]	SSD3, SSD2, SSD1, SSD0;
 	reg [7:0]  SSD_CATHODES;
+
+	// VGA
+	wire bright;
+	wire[9:0] hc, vc;
+	// wire[15:0] score;
+	// wire [6:0] ssdOut;
+	// wire [3:0] anode;
+	wire [11:0] rgb;
 	
 //------------	
 // Disable the three memories so that they do not interfere with the rest of the design.
@@ -114,14 +130,14 @@ module ee354_GCD_top
 	// BtnL is used as both Start and Acknowledge. 
 	// Is the debouncing of the start/ack signal necessary? Discuss with your TA
 
-ee354_debouncer #(.N_dc(28)) ee354_debouncer_2 
+ee354_debouncer #(.N_dc(28)) ee354_debouncer_4 
         (.CLK(sys_clk), .RESET(Reset), .PB(BtnL), .DPB( ), 
 		.SCEN(BtnL_Pulse), .MCEN( ), .CCEN( ));
 
-ee354_debouncer #(.N_dc(28)) ee354_debouncer_1 
+ee354_debouncer #(.N_dc(28)) ee354_debouncer_3 
         (.CLK(sys_clk), .RESET(Reset), .PB(BtnR), .DPB( ), 
 		.SCEN(BtnR_Pulse), .MCEN( ), .CCEN( ));
-ee354_debouncer #(.N_dc(28)) ee354_debouncer_1 
+ee354_debouncer #(.N_dc(28)) ee354_debouncer_2 
         (.CLK(sys_clk), .RESET(Reset), .PB(BtnU), .DPB( ), 
 		.SCEN(BtnU_Pulse), .MCEN( ), .CCEN( ));
 ee354_debouncer #(.N_dc(28)) ee354_debouncer_1 
@@ -148,10 +164,18 @@ ee354_debouncer #(.N_dc(28)) ee354_debouncer_0 // ****** TODO  in Part 2 ******
 		end
 	end
 	
+	wire [4:0] disp_i, disp_j, disp_value;
+	
 	// the state machine module
-	sindoku sindoku_1(.Clk(sys_clk), .R(BtnR_Pulse), .L(BtnL_Pulse), .U(BtnU_Pulse), .D(BtnD_Pulse), .C(BtnC_Pulse), .Reset(Reset), .Ack(Ack)
+	sindoku sindoku_1(.Clk(sys_clk), .R(BtnR_Pulse), .L(BtnL_Pulse), .U(BtnU_Pulse), .D(BtnD_Pulse), .C(BtnC_Pulse), .Reset(Reset), .Ack(Ack),
 						  .CheckSolu(CheckSolu), .userIn(userIn), .q_I(q_I), .q_Solve(q_Solve), .q_Check(q_Check), .q_Correct(q_Correct), .q_Incorrect(q_Incorrect),
-						  .i(i), .j(j), .row(row), .col(col), .puzzle_ij(puzzle_ij), .solu_ij(solu_ij));
+						  .i(i), .j(j), .row(row), .col(col), .puzzle_ij(puzzle_ij), .solu_ij(solu_ij),
+						  .disp_i(disp_i), .disp_j(disp_j), .disp_value(disp_value));
+
+	// VGA DISPLAY
+	display_controller dc(.clk(board_clk), .hSync(hSync), .vSync(vSync), .bright(bright), .hCount(hc), .vCount(vc));
+
+	vga_bitchange vbc(.clk(board_clk), .bright(bright), .button(BtnU), .hCount(hc), .vCount(vc), .rgb(rgb), .disp_i(disp_i), .disp_j(disp_j), .disp_value(disp_value) );
 
 //------------
 // OUTPUT: LEDS
@@ -182,6 +206,11 @@ ee354_debouncer #(.N_dc(28)) ee354_debouncer_0 // ****** TODO  in Part 2 ******
 	assign An3 = 1'b1;
 	assign An2 = 1'b1;
 	assign An1 = 1'b1;
+
+	// VGA 
+	assign vgaR = rgb[11 : 8];
+	assign vgaG = rgb[7  : 4];
+	assign vgaB = rgb[3  : 0];
 
 	
 	// and finally convert SSD_num to ssd
