@@ -67,7 +67,7 @@ module sindoku(Clk, R, L, U, D, C, Reset, Ack, CheckSolu, userIn, q_I, q_Solve, 
 						row <= 0;
 						col <=0;
 						i<=0;
-						j<=1;
+						j<=0;
 						{puzzle[0][0], puzzle[0][1], puzzle[0][2], puzzle[0][3], puzzle[0][4], puzzle[0][5], puzzle[0][6], puzzle[0][7], puzzle[0][8]}  <= {5'd0,5'd5,5'd0,5'd3,5'd1,5'd4,5'd0,5'd6,5'd0} ;
 						{puzzle[1][0], puzzle[1][1], puzzle[1][2], puzzle[1][3], puzzle[1][4], puzzle[1][5], puzzle[1][6], puzzle[1][7], puzzle[1][8]}  <= {5'd8,5'd7,5'd0,5'd0,5'd0,5'd9,5'd4,5'd0,5'd3} ;
 						{puzzle[2][0], puzzle[2][1], puzzle[2][2], puzzle[2][3], puzzle[2][4], puzzle[2][5], puzzle[2][6], puzzle[2][7], puzzle[2][8]}  <= {5'd6,5'd4,5'd3,5'd5,5'd0,5'd7,5'd1,5'd9,5'd2} ;
@@ -94,16 +94,30 @@ module sindoku(Clk, R, L, U, D, C, Reset, Ack, CheckSolu, userIn, q_I, q_Solve, 
 						if(CheckSolu)
 						begin
 							state<= CHECK;
+							i <= 0;
+							j <= 0;
 						end
 		               	
-		               	if(R && col != 8) //  This causes single-stepping the SUB state
-		             		col <= col +1;
+		               	else if(R && col != 8) //  This causes single-stepping the SUB state
+							begin
+			                col <= col +1;
+							i <= col + 1;
+							end
 						else if(L && col != 0) //  This causes single-stepping the SUB state
+							begin
 		               		col <= col -1;
+							i <= col - 1;
+							end
 						else if(U && row != 0) //  This causes single-stepping the SUB state
+							begin
 		               		row <= row -1;
+							j <= row - 1;
+							end
 						else if(D && row != 8) //  This causes single-stepping the SUB state
+							begin
 		               		row <= row +1;
+							j <= row + 1;
+							end
 						else if(C) //  This causes single-stepping the SUB state
 		               		puzzle[row][col] <= userIn;
 		            end

@@ -33,6 +33,14 @@ module sindoku_tb_v;
 	wire [4:0] puzzle_ij, solu_ij;
 	reg [9*8:0] state_string; // 6-character string for symbolic display of state
 	integer clk_cnt, start_clock_cnt,clocks_taken;
+	wire [4:0] disp_i, disp_j, disp_value;
+		// VGA
+	wire bright;
+	wire[9:0] hc, vc;
+	// wire[15:0] score;
+	// wire [6:0] ssdOut;
+	// wire [3:0] anode;
+	wire [11:0] rgb;
 	// Instantiate the Unit Under Test (UUT)
 	sindoku uut(.Clk(Clk), 
 		.R(BtnR_Pulse), 
@@ -54,9 +62,17 @@ module sindoku_tb_v;
 		.row(row),
 		.col(col),
 		.puzzle_ij(puzzle_ij),
-		.solu_ij(solu_ij));
+		.solu_ij(solu_ij),
+		.disp_i(disp_i), .disp_j(disp_j), .disp_value(disp_value));
 		
 		
+
+	// VGA DISPLAY
+	display_controller dc(.clk(board_clk), .hSync(hSync), .vSync(vSync), .bright(bright), .hCount(hc), .vCount(vc));
+
+	vga_bitchange vbc(.clk(board_clk), .bright(bright), .button(BtnU), .hCount(hc), .vCount(vc), .rgb(rgb), .disp_i(disp_i), .disp_j(disp_j), .disp_value(disp_value), .i(i), .j(j));
+	
+	
 		always  begin #5; Clk = ~ Clk; end
 		always@(posedge Clk) clk_cnt=clk_cnt+1; //don't want to use reset to clear the clk_cnt or initialize
 		initial begin
@@ -98,7 +114,7 @@ module sindoku_tb_v;
 		start_clock_cnt=clk_cnt;
 		
 		//First stimulus (36,24)
-		userIn =2;
+		userIn =1; // was 2
 		//make start signal active for one clock
 		@(posedge Clk);
 		#1;

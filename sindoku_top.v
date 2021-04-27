@@ -165,6 +165,7 @@ ee354_debouncer #(.N_dc(28)) ee354_debouncer_0 // ****** TODO  in Part 2 ******
 	end
 	
 	wire [4:0] disp_i, disp_j, disp_value;
+	wire [4:0] i, j;
 	
 	// the state machine module
 	sindoku sindoku_1(.Clk(sys_clk), .R(BtnR_Pulse), .L(BtnL_Pulse), .U(BtnU_Pulse), .D(BtnD_Pulse), .C(BtnC_Pulse), .Reset(Reset), .Ack(Ack),
@@ -175,7 +176,7 @@ ee354_debouncer #(.N_dc(28)) ee354_debouncer_0 // ****** TODO  in Part 2 ******
 	// VGA DISPLAY
 	display_controller dc(.clk(board_clk), .hSync(hSync), .vSync(vSync), .bright(bright), .hCount(hc), .vCount(vc));
 
-	vga_bitchange vbc(.clk(board_clk), .bright(bright), .button(BtnU), .hCount(hc), .vCount(vc), .rgb(rgb), .disp_i(disp_i), .disp_j(disp_j), .disp_value(disp_value) );
+	vga_bitchange vbc(.clk(board_clk), .bright(bright), .button(BtnU), .hCount(hc), .vCount(vc), .rgb(rgb), .disp_i(disp_i), .disp_j(disp_j), .disp_value(disp_value), .i(i), .j(j));
 
 //------------
 // OUTPUT: LEDS

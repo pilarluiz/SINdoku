@@ -1,5 +1,15 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
+add wave -noupdate /vga_tb_v/Clk
+add wave -noupdate -radix unsigned /vga_tb_v/h
+add wave -noupdate -radix unsigned /vga_tb_v/v
+
+
+add wave -noupdate -radix hex /vga_tb_v/rgb
+add wave -noupdate -radix hex /vga_tb_v/disp_i
+add wave -noupdate -radix hex /vga_tb_v/disp_j
+add wave -noupdate /vga_bitchange/state
+
 add wave -noupdate /sindoku_tb_v/Clk
 add wave -noupdate -radix unsigned -radixshowbase 0 /sindoku_tb_v/clk_cnt
 add wave -noupdate /sindoku_tb_v/Reset
